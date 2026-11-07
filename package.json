@@ -1,0 +1,16 @@
+{
+  "name": "cup-roll",
+  "version": "1.0.0",
+  "private": true,
+  "description": "球を転がしてカップに入れる2人対戦ゲーム",
+  "main": "server_cl.js",
+  "scripts": {
+    "start": "node server_cl.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.22.1"
+  }
+}

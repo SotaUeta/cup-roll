@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>カップ・ロール</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style_cl.css">
+</head>
+<body>
+<main id="lobby" class="lobby">
+  <h1>カップ・ロール</h1>
+  <p class="lead">球を転がして、テーブルの端のカップに入れる2人対戦ゲーム。</p>
+
+  <label class="field">名前
+    <input id="name" maxlength="12" autocomplete="off" placeholder="プレイヤー">
+  </label>
+
+  <section id="joinBox" class="box" hidden>
+    <p>招待された部屋 <b id="joinCode"></b></p>
+    <button id="joinBtn" class="primary">この部屋に入る</button>
+  </section>
+
+  <section class="box">
+    <button id="createBtn" class="primary">部屋を作って友人を招待</button>
+    <div class="row">
+      <input id="codeInput" maxlength="4" placeholder="部屋コード" autocomplete="off">
+      <button id="codeBtn">参加</button>
+    </div>
+    <button id="localBtn">この端末で2人で遊ぶ</button>
+  </section>
+
+  <p id="lobbyError" class="error"></p>
+
+  <details class="rules">
+    <summary>ルール</summary>
+    <ul>
+      <li>1人6球。交互に1球ずつ転がす。</li>
+      <li>テーブルの下半分を押したまま後ろに引いて離すと転がる。引く長さが強さ、引く向きの反対が狙い。</li>
+      <li>カップは 2・1・X・5・X・1・2。Xは −3点。</li>
+      <li>強すぎるとカップを飛び越え、弱いと台に残る。台に残った球は他の球に押されて入ることもある。</li>
+      <li>カップに入るのは1球だけ。後から入った球が前の球を押し出し、そのカップを奪う。</li>
+      <li>全球を投げ終えた時点で、カップの中の自分の球の合計点が高い方が勝ち。</li>
+    </ul>
+  </details>
+</main>
+
+<main id="game" class="game" hidden>
+  <header class="hud">
+    <div class="player" id="p0"><span class="dot white"></span><span class="pinfo"><span class="pname"></span><span class="pleft"></span></span><span class="pscore"></span></div>
+    <div class="player" id="p1"><span class="dot orange"></span><span class="pinfo"><span class="pname"></span><span class="pleft"></span></span><span class="pscore"></span></div>
+  </header>
+  <div id="stage" class="stage">
+    <canvas id="cv"></canvas>
+    <div id="waiting" class="overlay" hidden>
+      <p>友人の参加を待っています</p>
+      <p class="code" id="roomCode"></p>
+      <button id="copyBtn">招待リンクをコピー</button>
+      <p class="small" id="copyNote"></p>
+    </div>
+  </div>
+  <footer class="bar">
+    <p id="status"></p>
+    <div class="actions">
+      <button id="rematchBtn" hidden>もう一度</button>
+      <button id="leaveBtn">ロビーへ</button>
+    </div>
+  </footer>
+</main>
+
+<script src="game_cl.js"></script>
+<script src="client_cl.js"></script>
+</body>
+</html>
