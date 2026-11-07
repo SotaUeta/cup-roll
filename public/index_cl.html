@@ -10,7 +10,7 @@
 <body>
 <main id="lobby" class="lobby">
   <h1>カップ・ロール</h1>
-  <p class="lead">球を転がして、テーブルの端のカップに入れる2人対戦ゲーム。</p>
+  <p class="lead">坂を転がる球をカップに入れて、自分のコップを先に全部消した方が勝ち。</p>
 
   <label class="field">名前
     <input id="name" maxlength="12" autocomplete="off" placeholder="プレイヤー">
@@ -35,20 +35,21 @@
   <details class="rules">
     <summary>ルール</summary>
     <ul>
-      <li>1人6球。交互に1球ずつ転がす。</li>
-      <li>テーブルの下半分を押したまま後ろに引いて離すと転がる。引く長さが強さ、引く向きの反対が狙い。</li>
-      <li>カップは 2・1・X・5・X・1・2。Xは −3点。</li>
-      <li>強すぎるとカップを飛び越え、弱いと台に残る。台に残った球は他の球に押されて入ることもある。</li>
-      <li>カップに入るのは1球だけ。後から入った球が前の球を押し出し、そのカップを奪う。</li>
-      <li>全球を投げ終えた時点で、カップの中の自分の球の合計点が高い方が勝ち。</li>
+      <li>テーブルはカップ側に傾いていて、球は必ず坂を転がり落ちる。</li>
+      <li>交互に1球ずつ。カップの方へスワイプ（PCはドラッグ）した向きに転がる。強さは関係ない。</li>
+      <li>投げる位置は中央から少し外れた所。プレイヤー1は左、プレイヤー2は右。</li>
+      <li>カップは 2・1・X・5・X・1・2。Xは0点。1つのカップに入るのは3球まで。満杯のカップに来た球は弾かれる。</li>
+      <li>横のコップは1人18個（左がプレイヤー1、右がプレイヤー2）。取った点の数だけ投げる側から消える。</li>
+      <li>コップが消えた所には壁がなく、球が台の横から落ちることがある。</li>
+      <li>先に自分のコップを全部消した方の勝ち。点の入るカップが全部埋まったら、残りが少ない方の勝ち。</li>
     </ul>
   </details>
 </main>
 
 <main id="game" class="game" hidden>
   <header class="hud">
-    <div class="player" id="p0"><span class="dot white"></span><span class="pinfo"><span class="pname"></span><span class="pleft"></span></span><span class="pscore"></span></div>
-    <div class="player" id="p1"><span class="dot orange"></span><span class="pinfo"><span class="pname"></span><span class="pleft"></span></span><span class="pscore"></span></div>
+    <div class="player" id="p0"><span class="dot white"></span><span class="pinfo"><span class="pname"></span><span class="pleft"></span></span><span class="chip c0"></span><span class="pscore"></span></div>
+    <div class="player" id="p1"><span class="dot orange"></span><span class="pinfo"><span class="pname"></span><span class="pleft"></span></span><span class="chip c1"></span><span class="pscore"></span></div>
   </header>
   <div id="stage" class="stage">
     <canvas id="cv"></canvas>

@@ -47,7 +47,10 @@ input { width: 100%; }
 .player.off { opacity: .45; }
 .pinfo { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
 .pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pscore { font-weight: 700; font-size: 20px; margin-left: auto; }
+.chip { width: 10px; height: 14px; border-radius: 2px; margin-left: auto; flex: none; }
+.chip.c0 { background: #2a9fd0; }
+.chip.c1 { background: #c42b8c; }
+.pscore { font-weight: 700; font-size: 20px; min-width: 1.4em; text-align: right; }
 .pleft { color: #777; font-size: 12px; white-space: nowrap; }
 .dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #0006; flex: none; }
 .dot.white { background: #f6f5f0; }

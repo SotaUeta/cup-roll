@@ -110,7 +110,7 @@ const handlers = {
     const r = G.applyShot(ctx.room.state, ctx.seat, msg);
     if (r.error) return send(ws, { t: 'error', code: r.error });
     ctx.room.state = r.state;
-    broadcast(ctx.room, { t: 'shot', seat: ctx.seat, frames: r.frames, events: r.events, newBall: r.newBall, state: r.state });
+    broadcast(ctx.room, { t: 'shot', seat: ctx.seat, frames: r.frames, result: r.result, state: r.state });
   },
 
   rematch(ws) {
