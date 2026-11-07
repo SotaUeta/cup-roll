@@ -27,6 +27,10 @@ cloudflared tunnel --url http://localhost:3000
 
 ### B. 常設する（Render の例）
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/SotaUeta/cup-roll)
+
+上のボタンから、`render.yaml` の設定のまま1クリックでデプロイできる。手動で設定する場合は次のとおり。
+
 1. このフォルダを GitHub リポジトリに push する
 2. Render で New → Web Service → そのリポジトリを選ぶ
 3. Build Command: `npm install`、Start Command: `npm start`
