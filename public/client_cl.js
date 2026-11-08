@@ -1,6 +1,7 @@
 (() => {
   'use strict';
   const G = window.CupGame;
+  const FX = window.FX;
   const C = G.C;
   const $ = (id) => document.getElementById(id);
 
@@ -80,6 +81,9 @@
     swipe: null,
     side: [C.SIDE_CUPS, C.SIDE_CUPS], // 表示中の横のコップの数（1個ずつ減らして見せる）
     sideT: 0,
+    pops: 0,           // ドパガキモード: 連続して消えたコップの数（音の高さ用）
+    streak: [0, 0],    // 連続で得点した回数
+    lastNow: 0,
     pending: false,
     message: '',
     conn: true,
@@ -144,7 +148,8 @@
   }
 
   function resetGameState() {
-    Object.assign(app, { seat: null, room: null, state: null, queue: [], play: null, swipe: null, pending: false, message: '',
+    FX.reset();
+    Object.assign(app, { seat: null, room: null, state: null, queue: [], play: null, swipe: null, pending: false, message: '', streak: [0, 0],
       side: [C.SIDE_CUPS, C.SIDE_CUPS], info: { names: [null, null], online: [false, false], rematch: [false, false] } });
   }
 
@@ -240,25 +245,87 @@
       if (!app.state || item.state.shotNo === 0) {
         app.message = '';
         app.side = G.sideLeft(item.state);
+        if (item.state.shotNo === 0) { app.streak = [0, 0]; FX.reset(); }
       }
       app.state = item.state;
       app.pending = false;
       updateUi();
       return;
     }
-    app.play = { item, t0: now };
+    app.play = { item, pos: 0, last: now };
     app.swipe = null;
+    FX.clearTrail();
+    if (FX.on) FX.sfx.launch();
     updateUi();
   }
 
   function finishItem(now) {
     const item = app.play.item;
+    const fr = item.frames[item.frames.length - 1];
     app.play = null;
     app.message = describeShot(item);
     app.state = item.state;
     app.pending = false;
     app.sideT = now;
+    app.pops = 0;
+    const r = item.result;
+    const v = r.type === 'cup' ? G.cupValue(r.cup) : 0;
+    app.streak[item.seat] = v > 0 ? app.streak[item.seat] + 1 : 0;
+    if (FX.on) shotFx(item, r, v, fr);
     updateUi();
+  }
+
+  // ---------- ドパガキモードの演出 ----------
+  function shotFx(item, r, v, fr) {
+    const seat = item.seat;
+    const streak = app.streak[seat];
+    if (r.type === 'cup' && v > 0) {
+      const x = G.CUP_X[r.cup], y = C.CUP_Y;
+      const big = v >= 5;
+      FX.burst(x, y, [COLORS.ball[seat], '#ffd23f', '#ff3b6b', '#3bd6ff', '#7bff5a'], big ? 90 : 35 + v * 8, big ? 520 : 340);
+      FX.shake(big ? 12 : 3 + v * 1.5, big ? 0.6 : 0.3);
+      FX.flash(big ? '#fff3a0' : '#ffffff', big ? 0.75 : 0.35);
+      FX.text(`+${v}`, x, y + 40, { size: big ? 54 : 38, color: big ? '#ffd23f' : '#ffffff' });
+      if (big) FX.text('JACKPOT!!', C.W / 2, C.L * 0.35, { size: 46, color: '#ffd23f', life: 1.6, vy: -15 });
+      if (streak >= 2) FX.text(`${streak}連続!!`, C.W / 2, C.L * 0.62, { size: 30 + Math.min(streak, 6) * 4, color: '#ff3b6b', life: 1.4, vy: -20 });
+      FX.sfx.cup(v, streak);
+      FX.vibrate(big ? [60, 40, 60, 40, 120] : [40]);
+      bump(seat);
+    } else if (r.type === 'cup') {
+      FX.text('スカ…', G.CUP_X[r.cup], C.CUP_Y + 40, { size: 30, color: '#b9b9c8' });
+      FX.shake(2, 0.2);
+      FX.sfx.zero();
+    } else {
+      const x = G.clamp(fr[0], 40, C.W - 40), y = G.clamp(fr[1], 30, C.L - 30);
+      FX.text(r.reason === 'gap' ? 'おしい!!' : 'ざんねん', x, y, { size: 30, color: '#b9b9c8' });
+      FX.sfx.miss();
+    }
+    if (item.state.phase === 'over') setTimeout(() => overFx(item.state), 700);
+  }
+
+  function overFx(s) {
+    if (!FX.on || app.state !== s) return;
+    const w = s.winner;
+    if (w === -1) { FX.setBanner('DRAW', '#ffffff'); return; }
+    const iLost = app.mode === 'net' && w !== app.seat;
+    if (iLost) {
+      FX.setBanner('LOSE…', '#9a9aae');
+      FX.sfx.lose();
+    } else {
+      FX.setBanner(app.mode === 'net' ? 'WIN!!' : `${nameOf(w)} WIN!!`, '#ffd23f');
+      FX.confetti(4);
+      FX.flash('#ffffff', 0.8);
+      FX.shake(10, 0.5);
+      FX.sfx.win();
+      FX.vibrate([80, 50, 80, 50, 200]);
+    }
+  }
+
+  function bump(seat) {
+    const el = $('p' + seat).querySelector('.pscore');
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
   }
 
   // ---------- 描画 ----------
@@ -342,25 +409,48 @@
   function drawPlayback(now) {
     const p = app.play;
     const fr = p.item.frames;
-    const fi = (now - p.t0) / 1000 / FRAME_SEC;
     const last = fr.length - 1;
+    // ドパガキモード: カップに入る直前だけスローにする
+    const r = p.item.result;
+    const slow = FX.on && r.type === 'cup' && G.cupValue(r.cup) > 0 && last - p.pos < 9;
+    p.pos += (now - p.last) / 1000 / FRAME_SEC * (slow ? (G.cupValue(r.cup) >= 5 ? 0.2 : 0.35) : 1);
+    p.last = now;
+    const fi = p.pos;
     const idx = Math.min(Math.floor(fi), last);
     const k = Math.min(fi - idx, 1);
     const a = fr[idx], b = fr[Math.min(idx + 1, last)];
-    drawBall(a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, p.item.seat);
+    const x = a[0] + (b[0] - a[0]) * k, y = a[1] + (b[1] - a[1]) * k;
+    if (FX.on) { FX.trailPush(x, y); FX.drawTrail(ctx, C.BALL_R, now); }
+    drawBall(x, y, p.item.seat);
     if (fi >= last) finishItem(now);
   }
 
   function frame(now) {
+    const dt = Math.min(0.05, (now - (app.lastNow || now)) / 1000);
+    app.lastNow = now;
     if (!app.play && app.queue.length) startItem(app.queue.shift(), now);
     // 得点した分の横のコップを1個ずつ消す
     if (app.state && !app.play) {
       const target = G.sideLeft(app.state);
-      if (now - app.sideT > 90) {
-        for (let i = 0; i < 2; i++) if (app.side[i] > target[i]) { app.side[i]--; app.sideT = now; }
+      if (now - app.sideT > (FX.on ? 70 : 90)) {
+        for (let i = 0; i < 2; i++) {
+          if (app.side[i] <= target[i]) continue;
+          app.side[i]--;
+          app.sideT = now;
+          if (FX.on) {
+            const x = i === 0 ? 11 : C.W - 11, y = C.SIDE_Y0 + app.side[i] * C.SIDE_PITCH;
+            FX.flyCup(x, y, COLORS.side[i], i === 0 ? -1 : 1);
+            FX.burst(x, y, [COLORS.side[i], '#ffffff'], 8, 160);
+            FX.sfx.pop(app.pops++);
+          }
+        }
       }
     }
+    FX.update(dt, C.W);
     if (!$('game').hidden) {
+      const [ox, oy] = FX.on ? FX.offset() : [0, 0];
+      ctx.save();
+      ctx.translate(ox, oy);
       drawTable();
       if (app.state) drawCupBalls(app.state);
       if (app.play) drawPlayback(now);
@@ -368,6 +458,9 @@
         // 次に転がす人の球を、投げる位置に常に表示する
         drawBall(C.LAUNCH_X[app.state.turn], C.LAUNCH_Y, app.state.turn);
       }
+      if (FX.on) FX.draw(ctx);
+      ctx.restore();
+      if (FX.on) FX.drawOverlay(ctx, VIEW, C.W / 2, C.L * 0.42);
     }
     requestAnimationFrame(frame);
   }
@@ -393,6 +486,7 @@
   }
 
   cv.addEventListener('pointerdown', (e) => {
+    FX.unlock();
     if (!canShoot()) return;
     app.swipe = { id: e.pointerId, pts: [toWorld(e)] };
     cv.setPointerCapture(e.pointerId);
@@ -428,6 +522,13 @@
   $('codeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom($('codeInput').value); });
   $('localBtn').onclick = startLocal;
   $('leaveBtn').onclick = () => leave();
+  const dopaLabel = () => {
+    $('dopaBtn').setAttribute('aria-pressed', String(FX.on));
+    $('dopaBtn').classList.toggle('primary', FX.on);
+    document.body.classList.toggle('dopa', FX.on);
+  };
+  $('dopaBtn').onclick = () => { FX.setOn(!FX.on); dopaLabel(); };
+  dopaLabel();
   $('rematchBtn').onclick = () => { app.tr.send({ t: 'rematch' }); if (app.mode === 'net') { app.info.rematch[app.seat] = true; updateUi(); } };
   $('copyBtn').onclick = async () => {
     const url = location.origin + location.pathname + '?room=' + app.room;

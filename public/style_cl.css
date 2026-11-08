@@ -66,7 +66,15 @@ canvas { display: block; touch-action: none; user-select: none; -webkit-user-sel
 .overlay .code { font-size: 32px; font-weight: 700; letter-spacing: 6px; }
 .small { font-size: 12px; color: #666; min-height: 1em; margin: 8px 0 0 !important; }
 
-.bar { display: flex; align-items: center; gap: 8px; padding: 6px 10px calc(10px + env(safe-area-inset-bottom)); }
-.bar p { flex: 1; margin: 0; font-size: 14px; line-height: 1.4; height: 2.8em; overflow: hidden; display: flex; align-items: center; }
-.actions { display: flex; gap: 6px; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 4px 10px calc(10px + env(safe-area-inset-bottom)); }
+.bar p { flex: 1 1 100%; margin: 0; font-size: 14px; line-height: 1.4; height: 2.8em; overflow: hidden; display: flex; align-items: center; }
+.actions { display: flex; gap: 6px; margin-left: auto; }
 .actions button { padding: 8px 12px; }
+
+/* ドパガキモード */
+.pscore.bump { animation: bump .5s ease-out; }
+@keyframes bump {
+  0% { transform: scale(1); color: #222; }
+  30% { transform: scale(1.8); color: #e8146b; }
+  100% { transform: scale(1); color: #222; }
+}
